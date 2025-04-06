@@ -3,26 +3,26 @@
 
 #define RST_PIN 9
 #define SS_PIN 10
-#define RELAY_PIN 8
+#define RELAY_PIN 7
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-// Replace this with your card UID
-byte allowedUID[] = {0xDE, 0xAD, 0xBE, 0xEF};
+// Your RFID card UID
+byte allowedUID[] = {0x83, 0x80, 0x56, 0x2A};
 
 void setup() {
   Serial.begin(9600);
-  SPI.begin();
-  mfrc522.PCD_Init();
+  SPI.begin();              
+  mfrc522.PCD_Init();       
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Relay off
-  Serial.println("Place your card to verify...");
+  digitalWrite(RELAY_PIN, LOW); // Make sure relay is off
+  Serial.println("Scan your RFID card...");
 }
 
 void loop() {
-  // Check for a new card
-  if (!mfrc522.PICC_IsNewCardPresent()) return;
-  if (!mfrc522.PICC_ReadCardSerial()) return;
+  // Look for a card
+  if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial())
+    return;
 
   Serial.print("Card UID: ");
   for (byte i = 0; i < mfrc522.uid.size; i++) {
@@ -31,9 +31,9 @@ void loop() {
   }
   Serial.println();
 
-  // Compare UID
+  // Check UID match
   bool match = true;
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
+  for (byte i = 0; i < 4; i++) {
     if (mfrc522.uid.uidByte[i] != allowedUID[i]) {
       match = false;
       break;
@@ -41,13 +41,14 @@ void loop() {
   }
 
   if (match) {
-    Serial.println("✅ Access Granted!");
-    digitalWrite(RELAY_PIN, HIGH); // Turn ON relay
-    delay(5000);                   // Keep it ON for 5 seconds
-    digitalWrite(RELAY_PIN, LOW);  // Turn OFF relay
+    Serial.println("✅ Access Granted - Relay ON");
+    digitalWrite(RELAY_PIN, HIGH); // Turn relay ON
+    delay(5000);                    // Keep it ON for 5 seconds
+    digitalWrite(RELAY_PIN, LOW);  // Turn relay OFF
   } else {
-    Serial.println("❌ Access Denied!");
+    Serial.println("❌ Access Denied");
   }
 
+  // Halt PICC
   mfrc522.PICC_HaltA();
 }
