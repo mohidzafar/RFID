@@ -3,7 +3,7 @@
 
 #define RST_PIN 9
 #define SS_PIN 10
-#define RELAY_PIN 7
+#define RELAY_PIN 8
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
