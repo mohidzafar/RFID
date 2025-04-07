@@ -6,10 +6,8 @@
 
 #define RELAY_PIN 8
 
-#define BUZZER_PIN 7
+#define BUZZER_PIN 1
 
-// #define GREEN_LED 0
-// #define RED_LED 1
 
 String card_uid = "";
 
@@ -20,8 +18,7 @@ MFRC522 mfrc522(RST_PIN, SS_PIN);
 void setup() {
     Serial.begin(9600);
     pinMode(RELAY_PIN, OUTPUT);
-    pinMode(GREEN_LED, OUTPUT);
-    pinMode(RED_LED, OUTPUT);
+    pinMode(BUZZER_PIN, OUTPUT);
     SPI.begin();
     mfrc522.PCD_Init();
 
@@ -52,6 +49,7 @@ void loop() {
 
     if (card_uid == allowed_uid_1) {
         digitalWrite(RELAY_PIN, HIGH);
+        Serial.println("Door Opened");
         delay(500);
         digitalWrite(RELAY_PIN, LOW);
         delay(500);
@@ -59,6 +57,7 @@ void loop() {
     }
     else {
         digitalWrite(BUZZER_PIN, HIGH);
+        Serial.println("BUZZER_PIN HIGH");
         delay(1000);
         digitalWrite(BUZZER_PIN,LOW);
         delay(1000);
