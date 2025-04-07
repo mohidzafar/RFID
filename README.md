@@ -1,54 +1,69 @@
-#include <SPI.h>
 #include <MFRC522.h>
+#include <SPI.h>
 
 #define RST_PIN 9
 #define SS_PIN 10
-#define RELAY_PIN 7
 
-MFRC522 mfrc522(SS_PIN, RST_PIN);
+#define RELAY_PIN 8
 
-// Your RFID card UID
-byte allowedUID[] = {0x83, 0x80, 0x56, 0x2A};
+#define BUZZER_PIN 7
+
+// #define GREEN_LED 0
+// #define RED_LED 1
+
+String card_uid = "";
+
+String allowed_uid_1 = "8380562A";
+
+MFRC522 mfrc522(RST_PIN, SS_PIN);
 
 void setup() {
-  Serial.begin(9600);
-  SPI.begin();              
-  mfrc522.PCD_Init();       
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Make sure relay is off
-  Serial.println("Scan your RFID card...");
+    Serial.begin(9600);
+    pinMode(RELAY_PIN, OUTPUT);
+    pinMode(GREEN_LED, OUTPUT);
+    pinMode(RED_LED, OUTPUT);
+    SPI.begin();
+    mfrc522.PCD_Init();
+
+    Serial.println("Scan your Card......");
 }
 
 void loop() {
-  // Look for a card
-  if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial())
-    return;
-
-  Serial.print("Card UID: ");
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-    Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-    Serial.print(mfrc522.uid.uidByte[i], HEX);
-  }
-  Serial.println();
-
-  // Check UID match
-  bool match = true;
-  for (byte i = 0; i < 4; i++) {
-    if (mfrc522.uid.uidByte[i] != allowedUID[i]) {
-      match = false;
-      break;
+    if (!mfrc522.PCC_IsNewCardPresent()) {
+        return;
     }
-  }
 
-  if (match) {
-    Serial.println("✅ Access Granted - Relay ON");
-    digitalWrite(RELAY_PIN, HIGH); // Turn relay ON
-    delay(5000);                    // Keep it ON for 5 seconds
-    digitalWrite(RELAY_PIN, LOW);  // Turn relay OFF
-  } else {
-    Serial.println("❌ Access Denied");
-  }
+    if (!mfrc522.PCC_ReadCardSerial()) {
+        return;
+    }
 
-  // Halt PICC
-  mfrc522.PICC_HaltA();
+    card_uid = "";
+
+    
+    for (byte i = 0; i < mfrc522.uid.size; i++) {
+        if(mfrc522.uid.uidByte[i] < 0x10) {
+            card_uid += "0";
+        }
+        card_uid += String(mfrc522.uid.uidByte[i], HEX);
+        card_uid.toUpperCase();
+
+        Serial.println(card_uid);
+    }
+
+    if (card_uid == allowed_uid_1) {
+        digitalWrite(RELAY_PIN, HIGH);
+        delay(500);
+        digitalWrite(RELAY_PIN, LOW);
+        delay(500);
+        delay(500);
+    }
+    else {
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(1000);
+        digitalWrite(BUZZER_PIN,LOW);
+        delay(1000);
+    }
+
+    mfrc522.PICC_HaltA();
+    mfrc522.PCC_StopCrypto1();
 }
